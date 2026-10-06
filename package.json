@@ -1,0 +1,16 @@
+{
+  "name": "todo_agent",
+  "version": "1.0.0",
+  "description": "Todo App with Agentic AI Capabilities",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/GiriRaj12/todo_agent.git"
+  },
+  "author": "er.giriraj12@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/GiriRaj12/todo_agent/issues"
+  },
+  "homepage": "https://github.com/GiriRaj12/todo_agent#readme"
+}

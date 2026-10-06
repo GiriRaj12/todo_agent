@@ -1,0 +1,70 @@
+name: todo-agent
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USERNAME:-todo_admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-mongo_password_12345}
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - todo-net
+
+  backend:
+    build:
+      context: ./backend
+    image: todo-agent-backend
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      MONGO_URL: mongodb://mongo:27017
+      MONGO_USERNAME: ${MONGO_USERNAME:-todo_admin}
+      MONGO_PASSWORD: ${MONGO_PASSWORD:-mongo_password_12345}
+      MONGO_DB_NAME: ${MONGO_DB_NAME:-todos}
+      AI_ENABLED: ${AI_ENABLED:-true}
+      AI_MAX_ITERATIONS: 5
+      LLM_BASE_URL: ${LLM_BASE_URL:-https://api.groq.com/openai/v1}
+      LLM_API_KEY: ${LLM_API_KEY:}
+      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-20b}
+      GROQ_TIMEOUT_MS: ${GROQ_TIMEOUT_MS:-15000}
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    networks:
+      - todo-net
+
+  frontend:
+    build:
+      context: ./frontend
+    image: todo-agent-frontend
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: http://backend:3000
+    ports:
+      - "8080:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - todo-net
+
+networks:
+  todo-net:
+
+volumes:
+  mongo-data:
